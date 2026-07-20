@@ -14,7 +14,7 @@ function MainLayout() {
         <Header />
 
         {/* Page Content */}
-        <main className="flex-1 px-8 pb-8 max-w-7xl w-full">
+        <main className="flex-1 px-8 pb-8 w-full">
           <Outlet />
         </main>
       </div>

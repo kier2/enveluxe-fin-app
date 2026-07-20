@@ -22,11 +22,16 @@ function Sidebar() {
       )
     },
     {
-      name: 'Envelope',
-      path: '/envelope',
+      name: 'Budget',
+      path: '/budget',
       icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-.659 1.591l-7.5 7.5c-.59.59-1.54.59-2.12 0l-7.5-7.5a2.25 2.25 0 0 1-.659-1.591V6.75m19.5 0a2.25 2.25 0 0 1-2.25 2.25h-15a２.２５ ２.２５ ０ ０ １-２.２５-２.２５" />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="budget-menu-icon">
+          <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
+          <path d="M4 6v12c0 1.1.9 2 2 2h14v-4" />
+          <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" />
+          <line x1="8" y1="11" x2="12" y2="11" />
+          <line x1="8" y1="15" x2="12" y2="15" />
+          <circle cx="18" cy="6" r="1" fill="currentColor" stroke="none" />
         </svg>
       )
     },
@@ -67,11 +72,11 @@ function Sidebar() {
     <aside className="w-64 min-h-screen bg-white border-r border-slate-100 flex flex-col justify-between p-6 h-screen sticky top-0">
       <div className="flex flex-col">
         {/* Brand Logo */}
-        <div className="mb-10 mt-2 px-2">
+        <div className="mb-10 mt-2 px-2 flex items-center w-full">
           <img 
             src={EnveluxLogo} 
             alt="Envelux Logo" 
-            className="h-60 w-auto object-contain"
+            className="h-40 w-full object-contain"
           />
         </div>
 
