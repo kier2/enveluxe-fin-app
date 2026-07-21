@@ -12,6 +12,7 @@ interface AuthContextType {
   isLoading: boolean;
   setUser: (user: User | null) => void;
   checkAuth: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,8 +37,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     checkAuth();
   }, []);
 
+  const logout = async () => {
+    try {
+      await api.post('/logout');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    } finally {
+      setUser(null);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, setUser, checkAuth }}>
+    <AuthContext.Provider value={{ user, isLoading, setUser, checkAuth, logout }}>
       {children}
     </AuthContext.Provider>
   );

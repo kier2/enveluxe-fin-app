@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import logo from '../../assets/img/enveluxe-logo.svg';
 import api from '../../utils/axios';
 import { getCsrfCookie } from '../../services/auth';
@@ -11,6 +12,7 @@ export default function Register() {
   const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { checkAuth } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -34,7 +36,8 @@ export default function Register() {
         password: formData.password
       });
       // Securely relies on http-only cookies provided by the API
-      navigate('/');
+      await checkAuth();
+      navigate('/dashboard');
     } catch (err: any) {
       if (err.response?.data?.errors) {
         const errors = err.response.data.errors;
@@ -261,7 +264,7 @@ export default function Register() {
           <div className="mt-8 pt-6 border-t border-gray-100">
             <p className="text-center text-sm text-gray-600">
               Already have an account?{' '}
-              <Link to="/auth/login" className="font-bold text-gray-900 hover:text-gray-700">
+              <Link to="/login" className="font-bold text-gray-900 hover:text-gray-700">
                 Log in
               </Link>
             </p>

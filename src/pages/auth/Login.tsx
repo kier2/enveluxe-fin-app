@@ -1,5 +1,6 @@
 import React, { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import logo from '../../assets/img/enveluxe-logo.svg';
 import { getCsrfCookie, type AuthResponse } from '../../services/auth';
 import api from '../../utils/axios';
@@ -10,6 +11,7 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { checkAuth } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -22,9 +24,9 @@ export default function Login() {
 
     try {
       await getCsrfCookie();
-      const response = await api.post<AuthResponse>('/login', formData);
-      console.log('Success:', response.data.user);
-      navigate('/');
+      await api.post<AuthResponse>('/login', formData);
+      await checkAuth();
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
@@ -191,7 +193,7 @@ export default function Login() {
 
         <p className="mt-8 text-center text-sm text-gray-600">
           Don't have an account?{' '}
-          <Link to="/auth/register" className="font-semibold text-[#046C4E] hover:text-[#03543D]">
+          <Link to="/register" className="font-semibold text-[#046C4E] hover:text-[#03543D]">
             Register for early access
           </Link>
         </p>
