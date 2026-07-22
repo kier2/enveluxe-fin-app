@@ -1,12 +1,16 @@
+import { useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { Outlet } from "react-router-dom";
+import AddTransactionModal from "../AddTransactionModal";
 
 function MainLayout() {
+  const [isAddTxnOpen, setIsAddTxnOpen] = useState(false);
+
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
+    <div className="flex min-h-screen bg-[#F8FAFC] dark:bg-slate-950 transition-colors duration-200">
       {/* Sidebar Navigation */}
-      <Sidebar />
+      <Sidebar onAddTransaction={() => setIsAddTxnOpen(true)} />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-screen">
@@ -18,6 +22,12 @@ function MainLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Global Add Transaction Modal */}
+      <AddTransactionModal
+        isOpen={isAddTxnOpen}
+        onClose={() => setIsAddTxnOpen(false)}
+      />
     </div>
   );
 }

@@ -1,7 +1,11 @@
 import EnveluxLogo from '../../assets/img/enveluxe-logo.svg';
 import { NavLink } from 'react-router-dom';
 
-function Sidebar() {
+interface SidebarProps {
+  onAddTransaction: () => void;
+}
+
+function Sidebar({ onAddTransaction }: SidebarProps) {
   const navItems = [
     {
       name: 'Dashboard',
@@ -25,13 +29,22 @@ function Sidebar() {
       name: 'Budget',
       path: '/budget',
       icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="budget-menu-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="budget-menu-icon">
           <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
           <path d="M4 6v12c0 1.1.9 2 2 2h14v-4" />
           <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" />
           <line x1="8" y1="11" x2="12" y2="11" />
           <line x1="8" y1="15" x2="12" y2="15" />
           <circle cx="18" cy="6" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      )
+    },
+    {
+      name: 'Income',
+      path: '/income',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
         </svg>
       )
     },
@@ -69,7 +82,7 @@ function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 min-h-screen bg-white border-r border-slate-100 flex flex-col justify-between p-6 h-screen sticky top-0">
+    <aside className="w-64 min-h-screen bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800/80 flex flex-col justify-between p-6 h-screen sticky top-0 transition-colors duration-200">
       <div className="flex flex-col">
         {/* Brand Logo */}
         <div className="mb-10 mt-2 px-2 flex items-center w-full">
@@ -89,8 +102,8 @@ function Sidebar() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-[14px] transition-all duration-200 ${
                   isActive
-                    ? 'bg-emerald-50/70 text-emerald-700 font-semibold'
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                    ? 'bg-emerald-50/70 text-emerald-700 font-semibold dark:bg-emerald-950/20 dark:text-emerald-400'
+                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200'
                 }`
               }
             >
@@ -103,7 +116,10 @@ function Sidebar() {
 
       <div className="flex flex-col">
         {/* Add Transaction Button */}
-        <button className="flex items-center justify-center gap-2 w-full bg-[#047857] hover:bg-[#065f46] active:scale-[0.98] text-white font-semibold text-[14px] py-3 px-4 rounded-xl shadow-sm hover:shadow transition-all duration-200 cursor-pointer mb-6">
+        <button
+          onClick={onAddTransaction}
+          className="flex items-center justify-center gap-2 w-full bg-[#047857] hover:bg-[#065f46] active:scale-[0.98] text-white font-semibold text-[14px] py-3 px-4 rounded-xl shadow-sm hover:shadow transition-all duration-200 cursor-pointer mb-6"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
@@ -119,8 +135,8 @@ function Sidebar() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-[14px] transition-all duration-200 ${
                   isActive
-                    ? 'bg-slate-50 text-slate-800 font-semibold'
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                    ? 'bg-slate-50 text-slate-800 font-semibold dark:bg-slate-800 dark:text-slate-200'
+                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200'
                 }`
               }
             >

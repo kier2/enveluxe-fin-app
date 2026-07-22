@@ -2,12 +2,15 @@ import './App.css'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './router.tsx'
 import { AuthProvider } from './contexts/AuthContext'
+import { SettingsProvider } from './contexts/SettingsContext'
 
 function App() {
   return (
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
+    <SettingsProvider>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </SettingsProvider>
   )
 }
 

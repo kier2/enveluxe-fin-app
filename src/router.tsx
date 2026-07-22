@@ -4,6 +4,10 @@ import AuthLayout from "./components/layouts/AuthLayout";
 import Dashboard from "./pages/Dashboard";
 import Budget from "./pages/Budget";
 import Transaction from "./pages/Transaction";
+import Income from "./pages/Income";
+import EditProfile from "./pages/EditProfile";
+import Settings from "./pages/Settings";
+import Reports from "./pages/Reports";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -19,7 +23,6 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            path: '/dashboard',
             element: <Dashboard />,
             handle: { name: "Dashboard Overview" }
           },
@@ -29,9 +32,29 @@ export const router = createBrowserRouter([
             handle: { name: "Budget" }
           },
           {
+            path: "/income",
+            element: <Income />,
+            handle: { name: "Income" }
+          },
+          {
             path: "/transactions",
             element: <Transaction />,
             handle: { name: "Transactions" }
+          },
+          {
+            path: "/profile",
+            element: <EditProfile />,
+            handle: { name: "Edit Profile" }
+          },
+          {
+            path: "/settings",
+            element: <Settings />,
+            handle: { name: "Settings" }
+          },
+          {
+            path: "/reports",
+            element: <Reports />,
+            handle: { name: "Reports" }
           }
         ],
       }

@@ -1,5 +1,8 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import api from "../utils/axios";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
+import Pagination from "../components/Pagination";
+import { useSettings } from "../contexts/SettingsContext";
 
 interface EnvelopeOption {
   id: number;
@@ -33,20 +36,31 @@ const formatDate = (dateStr: string): string => {
   });
 };
 
-const formatCurrency = (amount: number): string => {
-  return `₱${Number(amount || 0).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-};
+
 
 export default function Transaction() {
+  const { formatCurrency } = useSettings();
   const [transactions, setTransactions] = useState<TransactionData[]>([]);
   const [envelopes, setEnvelopes] = useState<EnvelopeOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentTransactionId, setCurrentTransactionId] = useState<number | null>(null);
+
+  // Delete modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [transactionToDeleteId, setTransactionToDeleteId] = useState<number | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  const totalPages = Math.ceil(transactions.length / itemsPerPage);
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [transactions.length, currentPage, totalPages]);
   const [formData, setFormData] = useState({
     type: "expense" as "income" | "expense",
     envelope_id: "",
@@ -137,14 +151,18 @@ export default function Transaction() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm("Are you sure you want to delete this transaction?")) {
-      try {
-        await api.delete(`/transactions/${id}`);
-        setTransactions(transactions.filter((txn) => txn.id !== id));
-      } catch (error) {
-        console.error("Error deleting transaction:", error);
-      }
+  const triggerDelete = (id: number) => {
+    setTransactionToDeleteId(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (transactionToDeleteId === null) return;
+    try {
+      await api.delete(`/transactions/${transactionToDeleteId}`);
+      setTransactions(transactions.filter((txn) => txn.id !== transactionToDeleteId));
+    } catch (error) {
+      console.error("Error deleting transaction:", error);
     }
   };
 
@@ -153,8 +171,8 @@ export default function Transaction() {
       {/* Page Header */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">Transactions</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Transactions</h2>
+          <p className="text-sm text-gray-500 dark:text-slate-400">
             Track all your income and expenses in one place.
           </p>
         </div>
@@ -181,17 +199,17 @@ export default function Transaction() {
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr>
-                <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50">Date</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50">Type</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50">Description</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50">Envelope</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50 text-right">Amount</th>
-                <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50 text-right">Actions</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40">Date</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40">Type</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40">Description</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40">Envelope</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40 text-right">Amount</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -219,25 +237,25 @@ export default function Transaction() {
                   </td>
                 </tr>
               ) : (
-                transactions.map((txn) => (
-                <tr key={txn.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50 transition-colors group">
-                  <td className="px-6 py-4 text-sm text-gray-500">{formatDate(txn.transaction_date)}</td>
+                transactions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((txn) => (
+                <tr key={txn.id} className="border-b border-gray-100 dark:border-slate-800/60 last:border-b-0 hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors group">
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{formatDate(txn.transaction_date)}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${
                         txn.type === "income"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-red-50 text-red-600"
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400"
+                          : "bg-red-50 text-red-600 dark:bg-red-950/20 dark:text-red-400"
                       }`}
                     >
                       {txn.type === "income" ? "↗ Income" : "↘ Expense"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-800 font-medium">{txn.description || "—"}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className="px-6 py-4 text-sm text-gray-800 dark:text-slate-200 font-medium">{txn.description || "—"}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
                     {txn.envelope ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-lg text-xs font-medium text-gray-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-slate-800 rounded-lg text-xs font-medium text-gray-600 dark:text-slate-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
                           <path d="M4 6v12c0 1.1.9 2 2 2h14v-4" />
                         </svg>
@@ -256,7 +274,7 @@ export default function Transaction() {
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => openEditModal(txn)}
-                        className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                        className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors cursor-pointer"
                         title="Edit"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -264,8 +282,8 @@ export default function Transaction() {
                         </svg>
                       </button>
                       <button
-                        onClick={() => handleDelete(txn.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                        onClick={() => triggerDelete(txn.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
                         title="Delete"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -280,6 +298,12 @@ export default function Transaction() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalItems={transactions.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Add/Edit Transaction Modal */}
@@ -397,6 +421,17 @@ export default function Transaction() {
           </div>
         </div>
       )}
+
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setTransactionToDeleteId(null);
+        }}
+        onConfirm={handleDelete}
+        title="Delete Transaction"
+        message="Are you sure you want to delete this transaction? This action cannot be undone."
+      />
     </div>
   );
 }

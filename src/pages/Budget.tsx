@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import api from "../utils/axios";
+import DeleteConfirmModal from "../components/DeleteConfirmModal";
+import Pagination from "../components/Pagination";
+import { useSettings } from "../contexts/SettingsContext";
 
 interface Transaction {
   id: number;
@@ -37,12 +40,7 @@ const formatDate = (dateStr: string): string => {
   });
 };
 
-const formatCurrency = (amount: number): string => {
-  return `₱${Number(amount || 0).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-};
+
 
 const getProgressColor = (percentage: number): string => {
   if (percentage >= 90) return "bg-red-500";
@@ -57,6 +55,7 @@ const getProgressBg = (percentage: number): string => {
 };
 
 export default function Envelope() {
+  const { formatCurrency } = useSettings();
   const [envelopes, setEnvelopes] = useState<Envelope[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -82,6 +81,21 @@ export default function Envelope() {
     amount: "",
     transaction_date: new Date().toISOString().split("T")[0],
   });
+
+  // Delete modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [envelopeToDeleteId, setEnvelopeToDeleteId] = useState<number | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  const totalPages = Math.ceil(envelopes.length / itemsPerPage);
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [envelopes.length, currentPage, totalPages]);
 
   const fetchEnvelopes = async () => {
     setIsLoading(true);
@@ -141,18 +155,22 @@ export default function Envelope() {
     }
   };
 
-  const handleDeleteEnvelope = async (id: number) => {
-    if (window.confirm("Are you sure you want to delete this envelope? All transactions under it will be affected.")) {
-      try {
-        await api.delete(`/envelopes/${id}`);
-        setEnvelopes(envelopes.filter((env) => env.id !== id));
-        if (expandedId === id) {
-          setExpandedId(null);
-          setExpandedTransactions([]);
-        }
-      } catch (error) {
-        console.error("Error deleting envelope:", error);
+  const triggerDeleteEnvelope = (id: number) => {
+    setEnvelopeToDeleteId(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteEnvelope = async () => {
+    if (envelopeToDeleteId === null) return;
+    try {
+      await api.delete(`/envelopes/${envelopeToDeleteId}`);
+      setEnvelopes(envelopes.filter((env) => env.id !== envelopeToDeleteId));
+      if (expandedId === envelopeToDeleteId) {
+        setExpandedId(null);
+        setExpandedTransactions([]);
       }
+    } catch (error) {
+      console.error("Error deleting envelope:", error);
     }
   };
 
@@ -218,8 +236,8 @@ export default function Envelope() {
       {/* Page Header */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">Envelopes</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Budget Envelopes</h2>
+          <p className="text-sm text-gray-500 dark:text-slate-400">
             Allocate your budget into envelopes and track spending per category.
           </p>
         </div>
@@ -247,17 +265,17 @@ export default function Envelope() {
 
       {/* Envelope Cards Grid */}
       {isLoading ? (
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden w-full">
+        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden w-full">
           <div className="overflow-x-auto w-full">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr>
-                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Name</th>
-                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Budget</th>
-                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Spent</th>
-                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Remaining</th>
-                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-gray-200 min-w-[150px]">Usage</th>
-                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-gray-200 text-right">Actions</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40 border-b border-gray-200 dark:border-slate-800">Name</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40 border-b border-gray-200 dark:border-slate-800">Budget</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40 border-b border-gray-200 dark:border-slate-800">Spent</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40 border-b border-gray-200 dark:border-slate-800">Remaining</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40 border-b border-gray-200 dark:border-slate-800 min-w-[150px]">Usage</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40 border-b border-gray-200 dark:border-slate-800 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -310,21 +328,21 @@ export default function Envelope() {
           </button>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden w-full">
+        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden w-full">
           <div className="overflow-x-auto w-full">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr>
-                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Name</th>
-                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Budget</th>
-                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Spent</th>
-                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Remaining</th>
-                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-gray-200 min-w-[150px]">Usage</th>
-                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-gray-200 text-right">Actions</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40 border-b border-gray-200 dark:border-slate-800">Name</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40 border-b border-gray-200 dark:border-slate-800">Budget</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40 border-b border-gray-200 dark:border-slate-800">Spent</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40 border-b border-gray-200 dark:border-slate-800">Remaining</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40 border-b border-gray-200 dark:border-slate-800 min-w-[150px]">Usage</th>
+                  <th className="px-6 py-4 text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider bg-gray-50 dark:bg-slate-800/40 border-b border-gray-200 dark:border-slate-800 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {envelopes.map((env) => {
+                {envelopes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((env) => {
                   const budgetLimit = Number(env.budget_limit || 0);
                   const spent = Number(env.spent || 0);
                   const balance = Number(env.balance || 0);
@@ -332,10 +350,10 @@ export default function Envelope() {
 
                   return (
                     <React.Fragment key={env.id}>
-                      <tr className="hover:bg-gray-50 group transition-colors flex flex-col md:table-row">
-                        <td className="px-6 py-4 border-b border-gray-200">
+                      <tr className="hover:bg-gray-50 dark:hover:bg-slate-800/20 group transition-colors flex flex-col md:table-row">
+                        <td className="px-6 py-4 border-b border-gray-200 dark:border-slate-800">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                            <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl flex items-center justify-center">
                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#047857" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
                                 <path d="M4 6v12c0 1.1.9 2 2 2h14v-4" />
@@ -343,21 +361,21 @@ export default function Envelope() {
                               </svg>
                             </div>
                             <div>
-                              <h3 className="text-sm font-semibold text-gray-900">{env.name}</h3>
-                              <p className="text-xs text-gray-400">{env.transactions_count} transaction{env.transactions_count !== 1 ? "s" : ""}</p>
+                              <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-200">{env.name}</h3>
+                              <p className="text-xs text-gray-400 dark:text-slate-500">{env.transactions_count} transaction{env.transactions_count !== 1 ? "s" : ""}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm font-bold text-gray-900 border-b border-gray-200">
+                        <td className="px-6 py-4 text-sm font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-slate-800">
                           {formatCurrency(budgetLimit)}
                         </td>
-                        <td className="px-6 py-4 text-sm font-bold text-red-500 border-b border-gray-200">
+                        <td className="px-6 py-4 text-sm font-bold text-red-500 border-b border-gray-200 dark:border-slate-800">
                           {formatCurrency(spent)}
                         </td>
-                        <td className={`px-6 py-4 text-sm font-bold border-b border-gray-200 ${balance >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        <td className={`px-6 py-4 text-sm font-bold border-b border-gray-200 dark:border-slate-800 ${balance >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                           {formatCurrency(balance)}
                         </td>
-                        <td className="px-6 py-4 border-b border-gray-200">
+                        <td className="px-6 py-4 border-b border-gray-200 dark:border-slate-800">
                           <div className="flex items-center gap-2">
                             <div className="flex-1">
                               <div className={`w-full h-2 rounded-full ${getProgressBg(percentage)}`}>
@@ -372,11 +390,11 @@ export default function Envelope() {
                             </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 border-b border-gray-200 text-right">
+                        <td className="px-6 py-4 border-b border-gray-200 dark:border-slate-800 text-right">
                           <div className="flex justify-end gap-2">
                             <button
                               onClick={() => openDetailsModal(env)}
-                              className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                              className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors cursor-pointer"
                               title="View Details"
                             >
                               <svg
@@ -410,7 +428,7 @@ export default function Envelope() {
                               </svg>
                             </button>
                             <button
-                              onClick={() => handleDeleteEnvelope(env.id)}
+                              onClick={() => triggerDeleteEnvelope(env.id)}
                               className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                               title="Delete"
                             >
@@ -427,6 +445,12 @@ export default function Envelope() {
               </tbody>
             </table>
           </div>
+          <Pagination
+            currentPage={currentPage}
+            totalItems={envelopes.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
         </div>
       )}
 
@@ -606,6 +630,17 @@ export default function Envelope() {
           </div>
         </div>
       )}
+
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setEnvelopeToDeleteId(null);
+        }}
+        onConfirm={handleDeleteEnvelope}
+        title="Delete Envelope"
+        message="Are you sure you want to delete this envelope? All transactions under it will be affected."
+      />
     </div>
   );
 }
